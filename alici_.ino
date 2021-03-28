@@ -1,10 +1,9 @@
 //#include <SoftwareSerial.h>
-//
 //#define xBeeRxPin 1
 //#define xBeeTxPin 0
 //SoftwareSerial xBeeSerial(xBeeRxPin, xBeeTxPin);
-//#define potpin A3 //Potansiyometreyi A0 pinine tanımlıyoruz
-//int deger = 0; //"Değer" adlı 0 başlangıçlı bir değişken tanımlıyoruz
+
+
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
@@ -21,8 +20,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define rolePin 10
 
 ///XBEE FLOAT DATA
-char str[5];
-float power;
+char str[8];
+char data[5];
 int i = 0;
 ///
 ///+- BUTON
@@ -31,10 +30,12 @@ int eksiButonDurum = 0;
 float sicaklik = 20;
 ///
 int roleDurum = 0;
+float device_1 = 20.00;//defaulf value
+float device_2 = 20.00;//defaulf value
+float ort_sic = 20.00;
+
 void setup() {
-  //  xBeeSerial.begin(57600);
   Serial.begin(57600);
-  //Serial.begin(9600); //9600 Baund bir seri haberleşme başlatıyoruz
   pinMode(ledPin, OUTPUT);
   pinMode(artiButon, INPUT);
   pinMode(eksiButon, INPUT);
@@ -62,7 +63,6 @@ void setup() {
   display.display();      // Show initial text
   delay(100);
   ///
-
 }
 
 
@@ -78,49 +78,35 @@ void loop() {
     delay(400);
 
   }
-  //  Serial.println(sicaklik);
 
-  //  deger = map(analogRead(potpin), 0, 1023, 0, 50); //"Değer" değişkeni potansiyometrenin değerini okuyup buna göre değişir
-  //  Serial.println(deger); //Okunan değer seri monitörde mesaj olarak gönderilir
-  //  delay(600); //Bu işlem 100 milisaniye aralıklarla yapılır
-  ///
-  //  digitalWrite(13, HIGH);
-  //  delay(1000);
-  //  digitalWrite(13, LOW);
-  //  delay(1000);
-  ///
-  //  union floatByte_t {
-  //    float f;
-  //    byte b[5];
-  //  };
-  //
-  //  floatByte_t recvTemp;
-  //  float myValues[10];
-  //  //read four bytes that make up the float value
-  //  for (int i = 0; i < 5; i++) recvTemp.b[i] = Serial.read();
-  //  Serial.println(recvTemp.f);
-  //  myValues[0] = recvTemp.f;       //save the value in an array
-  //  //float tempC = sensors.getTempCByIndex(0);
-  //  //xBeeSerial.write(tempC);
-  //  //delay(5000);
   if (Serial.available() > 0) {
-    //xBeeSerial.println( xBeeSerial.parseFloat());
-    //      data = xBeeSerial.read(); //save data into integer variable dataByte
-    //      xBeeSerial.println(data);
-    //    float tempC = Serial.write(Serial.read());
-    //    if (tempC > 0)Serial.print("başarılı");
     str[i] = Serial.read();
+    //Serial.println(str[i]);
+    if (i > 2) {
+      data[i - 3] = str[i];
+    }
     i++;
   }
-  if (i == 5) {
+  if (i == 8) {
     i = 0;
-    power = atof(str);
-    Serial.print("oda sıcaklığı: ");
-    Serial.println(power);
+    if (str[2] == '1') {
+      device_1  = atof(data);
+    }
+    else if (str[2] == '2') {
+      device_2 = atof(data);
+    }
+    ort_sic = (device_1 + device_2) / 2;
+    Serial.print("1. Xbee sıcaklık: ");
+    Serial.println(device_1);
+    Serial.print("2. Xbee sıcaklık: ");
+    Serial.println(device_2);
+    Serial.print("Ortalama oda sıcaklığı: ");
+    Serial.println(ort_sic);
     Serial.print("ayarlanan sicaklık : ");
     Serial.println(sicaklik);
     Serial.print("kombi durumu : ");
     Serial.println(roleDurum);
+
   }
   ///
   //clear display
@@ -132,7 +118,7 @@ void loop() {
   display.print("Ort. Sicaklik: ");
   display.setTextSize(2);
   display.setCursor(0, 10);
-  display.print(power);
+  display.print(ort_sic);
   display.print(" ");
   display.setTextSize(1);
   display.cp437(true);
@@ -166,11 +152,11 @@ void loop() {
 
   display.display();
   ///LED YAKMA ve Röle Tetikleme
-  if (power <= sicaklik) {
+  if (ort_sic <= sicaklik) {
     roleDurum = 1;
   }
 
-  if (power <= sicaklik + 1 && roleDurum == 1) {
+  if (ort_sic <= sicaklik + 1 && roleDurum == 1) {
     digitalWrite(ledPin, HIGH);
     digitalWrite(rolePin, LOW);
   }
