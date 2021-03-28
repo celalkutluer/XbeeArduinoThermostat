@@ -6,7 +6,8 @@
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-
+// Include Wire Library for I2C
+#include <Wire.h>
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
@@ -30,9 +31,9 @@ int eksiButonDurum = 0;
 float sicaklik = 20;
 ///
 int roleDurum = 0;
-float device_1 = 20.00;//defaulf value
-float device_2 = 20.00;//defaulf value
-float ort_sic = 20.00;
+float device_1 = 0.00;//defaulf value
+float device_2 = 0.00;//defaulf value
+float ort_sic = 0.00;
 
 void setup() {
   Serial.begin(57600);
@@ -95,7 +96,15 @@ void loop() {
     else if (str[2] == '2') {
       device_2 = atof(data);
     }
-    ort_sic = (device_1 + device_2) / 2;
+    if (device_1 == 0) {
+      ort_sic = (device_2 + device_2) / 2;
+    }
+    else if (device_2 == 0) {
+      ort_sic = (device_1 + device_1) / 2;
+    }
+    else {
+      ort_sic = (device_1 + device_2) / 2;
+    }
     Serial.print("1. Xbee sıcaklık: ");
     Serial.println(device_1);
     Serial.print("2. Xbee sıcaklık: ");
